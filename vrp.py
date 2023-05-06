@@ -10,8 +10,10 @@
 from argparse import ArgumentParser
 import csv
 from math import dist
+from operator import ne
 from platform import node
 import random
+import sys
 import numpy as np
 
 class Node:
@@ -38,13 +40,13 @@ def process_input_data(filename, maxdist):
 def distance(node1, node2):
   return np.sqrt((node1.x - node2.x)**2 + (node1.y - node2.y)**2)
 
-def fit(vrp: GraphVrp, population):
-  d = distance(vrp.depot, vrp.nodes[population[0]])
-  for i in range(len(population) - 1):
-    previous = vrp.nodes[population[i]]
-    next = vrp.nodes[population[i + 1]]
+def fit(vrp: GraphVrp, route):
+  d = distance(vrp.depot, vrp.nodes[route[0]])
+  for i in range(len(route) - 1):
+    previous = vrp.nodes[route[i]]
+    next = vrp.nodes[route[i + 1]]
     d += distance(previous, next)
-  d += distance(vrp.nodes[population[len(population) - 1]], vrp.depot)
+  d += distance(vrp.nodes[route[len(route) - 1]], vrp.depot)
   return d
 
 def adjust(vrp: GraphVrp, route):
@@ -72,7 +74,7 @@ def adjust(vrp: GraphVrp, route):
   # To implement
 
 
-  return population
+  return route
 
 def genetic_algorithm(vrp: GraphVrp, iterations, popsize):
   # generage a random initial population
@@ -85,14 +87,54 @@ def genetic_algorithm(vrp: GraphVrp, iterations, popsize):
   for p in population:
     adjust(p)
   
-  # for i in range(iterations):
-  #   nextPopulation = []
-  #   for j in range(len(population) / 2):
-  #     parentIds = set()
-  #     while len(parentIds) < 4:
-  #       parentIds |= {random.randint(0, len(population) - 1)}
-  #     parentIds = list(parentIds)
-  return 0
+  for i in range(iterations):
+    nextPopulation = []
+    for j in range(len(population) / 2):
+      parentIds = set()
+      while len(parentIds) < 4:
+        parentIds |= {random.randint(0, len(population) - 1)}
+      parentIds = list(parentIds)
+
+      if fit(population[parentIds[0]]) < fit(population[parentIds[1]]):
+        parent1 = population[parentIds[0]]
+      else:
+        parent1 = population[parentIds[1]]
+
+      if fit(population[parentIds[2]]) < fit(population[parentIds[3]]):
+        parent2 = population[parentIds[2]]
+      else:
+        parent2 = population[parentIds[3]]
+
+      # Crossover
+
+      cutPoint1, cutPoint2 = random.randint(1, min(len(parent1), len(parent2)) - 1), random.randint(1, min(len(parent1), len(parent2)) - 1)
+      cutPoint1, cutPoint2 = min(cutPoint1, cutPoint2), max(cutPoint1, cutPoint2)
+
+      child1 = parent1[:cutPoint1] + parent2[cutPoint1:cutPoint2] + parent1[cutPoint2:]
+      child2 = parent2[:cutPoint1] + parent1[cutPoint1:cutPoint2] + parent2[cutPoint2:]
+      nextPopulation += [child1, child2]
+
+      # Mutation
+
+    if random.randint(1, 15) == 1:
+      mutatedPopulation = nextPopulation[random.randint(0, len(nextPopulation) - 1)]
+      i1 = random.randint(0, len(mutatedPopulation) - 1)
+      i2 = random.randint(0, len(mutatedPopulation) - 1)
+      mutatedPopulation[i1], mutatedPopulation[i2] = mutatedPopulation[i2], mutatedPopulation[i1]
+
+    for r in nextPopulation:
+      r = adjust(r)
+    population = nextPopulation
+
+  better = None
+  bf = sys.float_info.max
+  for r in population:
+    f = fit(r)
+    if f < bf:
+      bf = f
+      better = r
+    
+  return better
 
 
 
