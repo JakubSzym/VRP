@@ -1,0 +1,1 @@
+python ..\sample_data.py --filename ..\sample_data --nodes 10 --minX -10 --maxX 10 --minY -10 --maxY 10
