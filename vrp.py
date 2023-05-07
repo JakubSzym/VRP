@@ -23,19 +23,20 @@ class Node:
     self.y = y
       
 class GraphVrp:
-  def __init__(self, maxdist, nodes) -> None:
+  def __init__(self, maxdist, nodes, trucks) -> None:
     self.maxdist = maxdist
+    self.trucks  = trucks
     self.nodes   = nodes
     self.depot   = Node(label="depot", x=0, y=0)
 
-def process_input_data(filename, maxdist):
+def process_input_data(filename, maxdist, trucks):
   nodes = []
   with open(filename, "r") as file:
     reader = csv.DictReader(file)
     for row in reader:
       nodes.append(Node(row['label'], float(row['x']), float(row['y'])))
     
-  return GraphVrp(maxdist, nodes)
+  return GraphVrp(maxdist, nodes, trucks)
 
 def distance(node1, node2):
   return np.sqrt((node1.x - node2.x)**2 + (node1.y - node2.y)**2)
@@ -71,6 +72,24 @@ def adjust(vrp: GraphVrp, route):
       if repeated:
         break
   # adjust distance constraint???
+  i = 0
+  d = 0.0
+  cap = vrp.maxdist
+  #print(f"{route=}")
+  #print(f"{len(route)=} and {len(vrp.nodes)=}")
+  route.append(0)
+  route.insert(0, 0)
+
+  while i < len(route)-1:
+    d += distance(vrp.nodes[route[i]], vrp.nodes[route[i+1]])
+    #print(f"{d=}")
+    if d > cap:
+      route.insert(i, 0)
+      d = 0.0
+      #print(route)
+      #break
+    i += 1
+  #i = len(route) - 2
   # To implement
 
 
@@ -80,16 +99,16 @@ def genetic_algorithm(vrp: GraphVrp, iterations, popsize):
   # generage a random initial population
   population = []
   for i in range(popsize):
-    p = range(1, len(vrp.nodes))
+    p = [i for i in range(1, len(vrp.nodes))] #p = range(1, len(vrp.nodes))
     random.shuffle(p)
     population.append(p)
   
   for p in population:
-    adjust(p)
-  
+    adjust(vrp, p)
+
   for i in range(iterations):
     nextPopulation = []
-    for j in range(len(population) / 2):
+    for j in range(int(len(population) / 2)):
       parentIds = set()
       while len(parentIds) < 4:
         parentIds |= {random.randint(0, len(population) - 1)}
@@ -133,7 +152,7 @@ def genetic_algorithm(vrp: GraphVrp, iterations, popsize):
     if f < bf:
       bf = f
       better = r
-    
+
   return better
 
 
@@ -142,10 +161,12 @@ def genetic_algorithm(vrp: GraphVrp, iterations, popsize):
 parser = ArgumentParser()
 parser.add_argument("--input", "-i", help="input data")
 parser.add_argument("--max", help="maximal dinstance for one truck")
+parser.add_argument("--trucks", help="maximal number of truck")
 parser.add_argument("--iterations", help="the number of generations of the genetic algorithm")
 parser.add_argument("--popsize", help="population size")
 args = parser.parse_args()
 
-vrp = process_input_data(args.input, int(args.max))
+vrp = process_input_data(args.input, int(args.max), int(args.trucks))
 
-genetic_algorithm(vrp, int(args.iterations), int(args.popsize))
+best = genetic_algorithm(vrp, int(args.iterations), int(args.popsize))
+print(best)
