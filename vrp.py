@@ -15,6 +15,7 @@ from platform import node
 import random
 import sys
 import numpy as np
+from PIL import Image, ImageDraw
 
 class Node:
   def __init__(self, label,x, y) -> None:
@@ -27,7 +28,6 @@ class GraphVrp:
     self.maxdist = maxdist
     self.trucks  = trucks
     self.nodes   = nodes
-    self.depot   = Node(label="depot", x=0, y=0)
 
 def process_input_data(filename, maxdist, trucks):
   nodes = []
@@ -50,7 +50,6 @@ def fit(vrp: GraphVrp, route):
     previous = vrp.nodes[route[i]]
     next = vrp.nodes[route[i + 1]]
     d += distance(previous, next)
-  d += distance(vrp.nodes[route[len(route) - 1]], vrp.depot)
   return d
 
 def remove_zeros(route):
@@ -169,8 +168,25 @@ def genetic_algorithm(vrp: GraphVrp, iterations, popsize):
   print(f"{bf=}")
   return better
 
+def draw(vrp: GraphVrp, route):
+  w, h = 2000, 2000
 
+  img = Image.new("RGB", (w, h), "white")
+  draw = ImageDraw.Draw(img)
 
+  for i, point in enumerate(vrp.nodes):
+    x, y = point.x*100+w/2, point.y*100+h/2
+    color = "blue" if i > 0 else "red"
+    draw.ellipse((x-10,y-10, x+10, y+10), fill=color, outline=(0, 0, 0))
+
+    draw.text((x,y), str(point.label), fill="black")
+
+  for i in range(len(route)-1):
+    begin = vrp.nodes[route[i]]
+    end = vrp.nodes[route[i+1]]
+    draw.line([(begin.x*100+w/2, begin.y*100+h/2), (end.x*100+w/2, end.y*100+h/2)], fill="black")
+
+  img.show()
 
 parser = ArgumentParser()
 parser.add_argument("--input", "-i", help="input data")
@@ -184,3 +200,5 @@ vrp = process_input_data(args.input, int(args.max), int(args.trucks))
 
 best = genetic_algorithm(vrp, int(args.iterations), int(args.popsize))
 print(best)
+
+draw(vrp, best)
