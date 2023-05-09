@@ -61,6 +61,7 @@ def remove_zeros(route):
   return route
 
 def adjust(vrp: GraphVrp, route):
+  route.insert(0, 0)
   route = remove_zeros(route)
   repeated = True
   while repeated:
