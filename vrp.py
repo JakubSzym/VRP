@@ -53,7 +53,16 @@ def fit(vrp: GraphVrp, route):
   d += distance(vrp.nodes[route[len(route) - 1]], vrp.depot)
   return d
 
+def remove_zeros(route):
+  i = len(route)-2
+  while i >= 0:
+    if route[i] == route[i+1] == 0:
+      del route[i]
+    i -= 1
+  return route
+
 def adjust(vrp: GraphVrp, route):
+  route = remove_zeros(route)
   repeated = True
   while repeated:
     repeated = False
@@ -81,7 +90,6 @@ def adjust(vrp: GraphVrp, route):
   #print(f"{route=}")
   #print(f"{len(route)=} and {len(vrp.nodes)=}")
   route.append(0)
-  route.insert(0, 0)
 
   while i < len(route)-1:
     d += distance(vrp.nodes[route[i]], vrp.nodes[route[i+1]])
@@ -94,8 +102,7 @@ def adjust(vrp: GraphVrp, route):
     i += 1
   #i = len(route) - 2
   # To implement
-
-
+  route = remove_zeros(route)
   return route
 
 def genetic_algorithm(vrp: GraphVrp, iterations, popsize):
@@ -104,6 +111,8 @@ def genetic_algorithm(vrp: GraphVrp, iterations, popsize):
   for i in range(popsize):
     p = [i for i in range(1, len(vrp.nodes))] #p = range(1, len(vrp.nodes))
     random.shuffle(p)
+    p.insert(0, 0)
+
     population.append(p)
   
   for p in population:
@@ -117,12 +126,12 @@ def genetic_algorithm(vrp: GraphVrp, iterations, popsize):
         parentIds |= {random.randint(0, len(population) - 1)}
       parentIds = list(parentIds)
 
-      if fit(population[parentIds[0]]) < fit(population[parentIds[1]]):
+      if fit(vrp,population[parentIds[0]]) < fit(vrp,population[parentIds[1]]):
         parent1 = population[parentIds[0]]
       else:
         parent1 = population[parentIds[1]]
 
-      if fit(population[parentIds[2]]) < fit(population[parentIds[3]]):
+      if fit(vrp,population[parentIds[2]]) < fit(vrp,population[parentIds[3]]):
         parent2 = population[parentIds[2]]
       else:
         parent2 = population[parentIds[3]]
@@ -145,7 +154,7 @@ def genetic_algorithm(vrp: GraphVrp, iterations, popsize):
       mutatedPopulation[i1], mutatedPopulation[i2] = mutatedPopulation[i2], mutatedPopulation[i1]
 
     for r in nextPopulation:
-      r = adjust(r)
+      r = adjust(vrp, r)
     population = nextPopulation
 
   better = None
@@ -157,7 +166,7 @@ def genetic_algorithm(vrp: GraphVrp, iterations, popsize):
     if f < bf:
       bf = f
       better = r
-  #print(f"{bf=}")
+  print(f"{bf=}")
   return better
 
 
