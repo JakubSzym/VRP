@@ -139,7 +139,9 @@ def genetic_algorithm(vrp: GraphVrp, iterations, popsize):
 
       # Mutation
 
-    if random.randint(1, 15) == 1:
+    #0 - 1% of population will mutate
+    mutation_count = random.randint(0, popsize * 0.01)
+    for j in range(mutation_count):
       mutatedPopulation = nextPopulation[random.randint(0, len(nextPopulation) - 1)]
       i1 = random.randint(0, len(mutatedPopulation) - 1)
       i2 = random.randint(0, len(mutatedPopulation) - 1)
@@ -197,5 +199,6 @@ print(best)
 draw(vrp, best)
 
 route = adjust(vrp, [9, 6, 3, 2, 5, 7, 4, 1, 8]) #[0, 9, 6, 1, 0, 3, 2, 5, 7, 4, 0, 8, 0]
+route = adjust(vrp, [9, 6, 1, 3, 2, 5, 7, 4, 8])
 my = fit(vrp, add_zeros(vrp, route))
 print(f"My try ({route}): {my}")
