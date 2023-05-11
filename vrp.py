@@ -42,10 +42,7 @@ def distance(node1, node2):
   return np.sqrt((node1.x - node2.x)**2 + (node1.y - node2.y)**2)
 
 def fit(vrp: GraphVrp, route):
-  if route.count(0) > vrp.trucks+1:
-    return 999999999
-
-  d = 0#distance(vrp.depot, vrp.nodes[route[0]])
+  d = (route.count(0) - (vrp.trucks+1)) * 999999999
   for i in range(len(route) - 1):
     previous = vrp.nodes[route[i]]
     next = vrp.nodes[route[i + 1]]
@@ -93,12 +90,9 @@ def adjust(vrp: GraphVrp, route):
 
   while i < len(route)-1:
     d += distance(vrp.nodes[route[i]], vrp.nodes[route[i+1]])
-    #print(f"{d=}")
     if d > cap:
       route.insert(i, 0)
       d = 0.0
-      #print(route)
-      #break
     i += 1
   #i = len(route) - 2
   # To implement
@@ -153,8 +147,8 @@ def genetic_algorithm(vrp: GraphVrp, iterations, popsize):
       i2 = random.randint(0, len(mutatedPopulation) - 1)
       mutatedPopulation[i1], mutatedPopulation[i2] = mutatedPopulation[i2], mutatedPopulation[i1]
 
-    for r in nextPopulation:
-      r = adjust(vrp, r)
+    for j in range(len(nextPopulation)):
+      nextPopulation[j] = adjust(vrp, nextPopulation[j])
     population = nextPopulation
 
   better = None
@@ -203,3 +197,7 @@ best = genetic_algorithm(vrp, int(args.iterations), int(args.popsize))
 print(best)
 
 draw(vrp, best)
+
+route = adjust(vrp, [9, 6, 1, 3, 2, 8, 5, 7, 4])
+my = fit(vrp, route)
+print(f"My try ({route}): {my}")
