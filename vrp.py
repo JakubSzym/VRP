@@ -80,22 +80,21 @@ def adjust(vrp: GraphVrp, route):
           break
       if repeated:
         break
-  # adjust distance constraint???
+  return route
+
+def add_zeros(vrp: GraphVrp, route):
   i = 0
   d = 0.0
   cap = vrp.maxdist
-  #print(f"{route=}")
-  #print(f"{len(route)=} and {len(vrp.nodes)=}")
+  route.insert(0, 0)
   route.append(0)
 
-  while i < len(route)-1:
-    d += distance(vrp.nodes[route[i]], vrp.nodes[route[i+1]])
+  while i < len(route) - 1:
+    d += distance(vrp.nodes[route[i]], vrp.nodes[route[i + 1]])
     if d > cap:
       route.insert(i, 0)
       d = 0.0
     i += 1
-  #i = len(route) - 2
-  # To implement
   route = remove_zeros(route)
   return route
 
@@ -103,16 +102,15 @@ def genetic_algorithm(vrp: GraphVrp, iterations, popsize):
   # generage a random initial population
   population = []
   for i in range(popsize):
-    p = [i for i in range(1, len(vrp.nodes))] #p = range(1, len(vrp.nodes))
+    p = [i for i in range(1, len(vrp.nodes))]
     random.shuffle(p)
-    p.insert(0, 0)
-
     population.append(p)
-  
-  for p in population:
-    adjust(vrp, p)
 
   for i in range(iterations):
+    zeroPopulation = []
+    for p in population:
+      zeroPopulation.append(add_zeros(vrp, p.copy()))
+
     nextPopulation = []
     for j in range(int(len(population) / 2)):
       parentIds = set()
@@ -120,12 +118,12 @@ def genetic_algorithm(vrp: GraphVrp, iterations, popsize):
         parentIds |= {random.randint(0, len(population) - 1)}
       parentIds = list(parentIds)
 
-      if fit(vrp,population[parentIds[0]]) < fit(vrp,population[parentIds[1]]):
+      if fit(vrp,zeroPopulation[parentIds[0]]) < fit(vrp,zeroPopulation[parentIds[1]]):
         parent1 = population[parentIds[0]]
       else:
         parent1 = population[parentIds[1]]
 
-      if fit(vrp,population[parentIds[2]]) < fit(vrp,population[parentIds[3]]):
+      if fit(vrp,zeroPopulation[parentIds[2]]) < fit(vrp,zeroPopulation[parentIds[3]]):
         parent2 = population[parentIds[2]]
       else:
         parent2 = population[parentIds[3]]
@@ -155,7 +153,7 @@ def genetic_algorithm(vrp: GraphVrp, iterations, popsize):
   bf = sys.float_info.max
   #print(f"{population=}")
   for r in population:
-    f = fit(vrp, r)
+    f = fit(vrp, add_zeros(vrp, r))
     #print(f"{f=}")
     if f < bf:
       bf = f
@@ -198,6 +196,6 @@ print(best)
 
 draw(vrp, best)
 
-route = adjust(vrp, [9, 6, 1, 3, 2, 8, 5, 7, 4])
-my = fit(vrp, route)
+route = adjust(vrp, [9, 6, 3, 2, 5, 7, 4, 1, 8]) #[0, 9, 6, 1, 0, 3, 2, 5, 7, 4, 0, 8, 0]
+my = fit(vrp, add_zeros(vrp, route))
 print(f"My try ({route}): {my}")
