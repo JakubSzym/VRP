@@ -42,7 +42,7 @@ def distance(node1, node2):
   return np.sqrt((node1.x - node2.x)**2 + (node1.y - node2.y)**2)
 
 def fit(vrp: GraphVrp, route):
-  d = (route.count(0) - (vrp.trucks+1)) * 999999999
+  d = max(0, route.count(0) - (vrp.trucks+1)) * 999999999
   for i in range(len(route) - 1):
     previous = vrp.nodes[route[i]]
     next = vrp.nodes[route[i + 1]]
@@ -198,7 +198,6 @@ print(best)
 
 draw(vrp, best)
 
-route = adjust(vrp, [9, 6, 3, 2, 5, 7, 4, 1, 8]) #[0, 9, 6, 1, 0, 3, 2, 5, 7, 4, 0, 8, 0]
 route = adjust(vrp, [9, 6, 1, 3, 2, 5, 7, 4, 8])
 my = fit(vrp, add_zeros(vrp, route))
 print(f"My try ({route}): {my}")
