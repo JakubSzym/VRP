@@ -184,11 +184,13 @@ def draw(vrp: GraphVrp, route):
 
 parser = ArgumentParser()
 parser.add_argument("--input", "-i", help="input data")
-parser.add_argument("--max", help="maximal dinstance for one truck")
+parser.add_argument("--max", help="maximal distance for one truck")
 parser.add_argument("--trucks", help="maximal number of truck")
 parser.add_argument("--iterations", help="the number of generations of the genetic algorithm")
-parser.add_argument("--popsize", help="population size")
+parser.add_argument("--popsize", help="population size, must be divided by 100")
 args = parser.parse_args()
+
+assert int(args.popsize) % 100 == 0, f"popsize % 100 != 0."
 
 vrp = process_input_data(args.input, int(args.max), int(args.trucks))
 
