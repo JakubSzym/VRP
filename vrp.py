@@ -156,7 +156,6 @@ def genetic_algorithm(vrp: GraphVrp, iterations, popsize):
 
     for route in population:
       f = fit(vrp, add_zeros(vrp, route))
-      #print(f"{f=}")
       if f < best_route_value:
         best_route_value = f
         best_route = route
