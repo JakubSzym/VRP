@@ -9,9 +9,6 @@
 
 from argparse import ArgumentParser
 import csv
-from math import dist
-from operator import ne
-from platform import node
 import random
 import sys
 import numpy as np
@@ -107,49 +104,51 @@ def genetic_algorithm(vrp: GraphVrp, iterations, popsize):
     population.append(p)
 
   for i in range(iterations):
-    zeroPopulation = []
+    zero_population = []
     for p in population:
-      zeroPopulation.append(add_zeros(vrp, p.copy()))
+      zero_population.append(add_zeros(vrp, p.copy()))
 
-    nextPopulation = []
+    fit_population = [fit(vrp, zero) for zero in zero_population]
+
+    next_population = []
     for j in range(int(len(population) / 2)):
-      parentIds = set()
-      while len(parentIds) < 4:
-        parentIds |= {random.randint(0, len(population) - 1)}
-      parentIds = list(parentIds)
+      parent_ids = set()
+      while len(parent_ids) < 4:
+        parent_ids |= {random.randint(0, len(population) - 1)}
+      parent_ids = list(parent_ids)
 
-      if fit(vrp,zeroPopulation[parentIds[0]]) < fit(vrp,zeroPopulation[parentIds[1]]):
-        parent1 = population[parentIds[0]]
+      if fit_population[parent_ids[0]] < fit_population[parent_ids[1]]:
+        parent1 = population[parent_ids[0]]
       else:
-        parent1 = population[parentIds[1]]
+        parent1 = population[parent_ids[1]]
 
-      if fit(vrp,zeroPopulation[parentIds[2]]) < fit(vrp,zeroPopulation[parentIds[3]]):
-        parent2 = population[parentIds[2]]
+      if fit_population[parent_ids[2]] < fit_population[parent_ids[3]]:
+        parent2 = population[parent_ids[2]]
       else:
-        parent2 = population[parentIds[3]]
+        parent2 = population[parent_ids[3]]
 
       # Crossover
 
-      cutPoint1, cutPoint2 = random.randint(1, min(len(parent1), len(parent2)) - 1), random.randint(1, min(len(parent1), len(parent2)) - 1)
-      cutPoint1, cutPoint2 = min(cutPoint1, cutPoint2), max(cutPoint1, cutPoint2)
+      cut_point1, cut_point2 = random.randint(1, min(len(parent1), len(parent2)) - 1), random.randint(1, min(len(parent1), len(parent2)) - 1)
+      cut_point1, cut_point2 = min(cut_point1, cut_point2), max(cut_point1, cut_point2)
 
-      child1 = parent1[:cutPoint1] + parent2[cutPoint1:cutPoint2] + parent1[cutPoint2:]
-      child2 = parent2[:cutPoint1] + parent1[cutPoint1:cutPoint2] + parent2[cutPoint2:]
-      nextPopulation += [child1, child2]
+      child1 = parent1[:cut_point1] + parent2[cut_point1:cut_point2] + parent1[cut_point2:]
+      child2 = parent2[:cut_point1] + parent1[cut_point1:cut_point2] + parent2[cut_point2:]
+      next_population += [child1, child2]
 
       # Mutation
 
     #0 - 1% of population will mutate
     mutation_count = random.randint(0, popsize * 0.01)
     for j in range(mutation_count):
-      mutatedPopulation = nextPopulation[random.randint(0, len(nextPopulation) - 1)]
-      i1 = random.randint(0, len(mutatedPopulation) - 1)
-      i2 = random.randint(0, len(mutatedPopulation) - 1)
-      mutatedPopulation[i1], mutatedPopulation[i2] = mutatedPopulation[i2], mutatedPopulation[i1]
+      mutated_population = next_population[random.randint(0, len(next_population) - 1)]
+      i1 = random.randint(0, len(mutated_population) - 1)
+      i2 = random.randint(0, len(mutated_population) - 1)
+      mutated_population[i1], mutated_population[i2] = mutated_population[i2], mutated_population[i1]
 
-    for j in range(len(nextPopulation)):
-      nextPopulation[j] = adjust(vrp, nextPopulation[j])
-    population = nextPopulation
+    for j in range(len(next_population)):
+      next_population[j] = adjust(vrp, next_population[j])
+    population = next_population
 
   better = None
   bf = sys.float_info.max
@@ -167,19 +166,19 @@ def draw(vrp: GraphVrp, route):
   w, h = 2000, 2000
 
   img = Image.new("RGB", (w, h), "white")
-  draw = ImageDraw.Draw(img)
+  draw_img = ImageDraw.Draw(img)
 
   for i, point in enumerate(vrp.nodes):
     x, y = point.x*100+w/2, point.y*100+h/2
     color = "blue" if i > 0 else "red"
-    draw.ellipse((x-10,y-10, x+10, y+10), fill=color, outline=(0, 0, 0))
+    draw_img.ellipse((x-10,y-10, x+10, y+10), fill=color, outline=(0, 0, 0))
 
-    draw.text((x,y), str(point.label), fill="black")
+    draw_img.text((x,y), str(point.label), fill="black")
 
   for i in range(len(route)-1):
     begin = vrp.nodes[route[i]]
     end = vrp.nodes[route[i+1]]
-    draw.line([(begin.x*100+w/2, begin.y*100+h/2), (end.x*100+w/2, end.y*100+h/2)], fill="black")
+    draw_img.line([(begin.x*100+w/2, begin.y*100+h/2), (end.x*100+w/2, end.y*100+h/2)], fill="black")
 
   img.show()
 
