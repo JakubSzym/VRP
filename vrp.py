@@ -96,8 +96,12 @@ def add_zeros(vrp: GraphVrp, route):
   return route
 
 def genetic_algorithm(vrp: GraphVrp, iterations, popsize):
+  best_route = None
+  best_route_value = sys.float_info.max
   # generage a random initial population
   population = []
+
+
   for i in range(popsize):
     p = [i for i in range(1, len(vrp.nodes))]
     random.shuffle(p)
@@ -150,17 +154,14 @@ def genetic_algorithm(vrp: GraphVrp, iterations, popsize):
       next_population[j] = adjust(vrp, next_population[j])
     population = next_population
 
-  better = None
-  bf = sys.float_info.max
-  #print(f"{population=}")
-  for r in population:
-    f = fit(vrp, add_zeros(vrp, r))
-    #print(f"{f=}")
-    if f < bf:
-      bf = f
-      better = r
-  print(f"{bf=}")
-  return better
+    for route in population:
+      f = fit(vrp, add_zeros(vrp, route))
+      #print(f"{f=}")
+      if f < best_route_value:
+        best_route_value = f
+        best_route = route
+  print(f"{best_route_value=}")
+  return best_route
 
 def draw(vrp: GraphVrp, route):
   w, h = 2000, 2000
