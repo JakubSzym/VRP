@@ -82,6 +82,7 @@ def adjust(vrp: GraphVrp, route):
 def add_zeros(vrp: GraphVrp, route):
   i = 0
   d = 0.0
+  route_len = len(route)
   cap = vrp.maxdist
   route.insert(0, 0)
   route.append(0)
@@ -92,6 +93,8 @@ def add_zeros(vrp: GraphVrp, route):
       route.insert(i, 0)
       d = 0.0
     i += 1
+    assert i < route_len * 3,f"Max distance is too small"
+
   route = remove_zeros(route)
   return route
 
