@@ -21,9 +21,11 @@ minY     = int(args.minY)
 maxY     = int(args.maxY)
 
 with open(filename, "w") as file:
-  #print("label,x,y")
   file.write("label,x,y\n")
-  for i in range(nodes):
+  x_depot = random.uniform(minX, maxX)
+  y_depot = random.uniform(minY, maxY)
+  file.write(f"Depot,{x_depot},{y_depot}\n")
+  for i in range(nodes-1):
     x = random.uniform(minX, maxX)
     y = random.uniform(minY, maxY)
     file.write(f"N{i+1},{x},{y}\n")

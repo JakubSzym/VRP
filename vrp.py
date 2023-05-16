@@ -201,7 +201,3 @@ best = genetic_algorithm(vrp, int(args.iterations), int(args.popsize))
 print(best)
 
 draw(vrp, best)
-
-route = adjust(vrp, [9, 6, 1, 3, 2, 5, 7, 4, 8])
-my = fit(vrp, add_zeros(vrp, route))
-print(f"My try ({route}): {my}")
