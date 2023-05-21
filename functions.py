@@ -48,48 +48,24 @@ def remove_zeros(route):
         i -= 1
     return route
 
-def adjust(dvrp: GraphDVRP, route):
-    route.insert(0, 0)
-    route = remove_zeros(route)
-    repeated = True
-    while repeated:
-        repeated = False
-        for i in range(len(route)):
-            for j in range(i):
-                if route[i] == route[j]:
-                    all = True
-                    for id in range(len(dvrp.nodes)):
-                        if id not in route:
-                            route[i] = id
-                            all = False
-                            break
-                    if all:
-                        del route[i]
-                    repeated = True
-
-                if repeated:
-                    break
-            if repeated:
-                break
-    return route
-
 
 def add_zeros(dvrp: GraphDVRP, route):
     i = 0
     d = 0.0
     route_len = len(route)
     cap = dvrp.maxdist
-    route.insert(0, 0)
-    route.append(0)
-    while i < len(route) - 1:
-        d += distance(dvrp.nodes[route[i]], dvrp.nodes[route[i + 1]])
+    r = route.copy()
+    r.insert(0, 0)
+    r.append(0)
+    while i < len(r) - 1:
+        d += distance(dvrp.nodes[r[i]], dvrp.nodes[r[i + 1]])
         if d > cap:
-            route.insert(i, 0)
+            r.insert(i, 0)
             d = 0.0
         i += 1
         assert i < route_len * 2 + 1, f"Max distance is too small"
-    route = remove_zeros(route)
-    return route
+    r = remove_zeros(r)
+    return r
 
 
 def genetic_algorithm(dvrp: GraphDVRP, iterations, popsize):
@@ -126,12 +102,15 @@ def genetic_algorithm(dvrp: GraphDVRP, iterations, popsize):
                 parent2 = population[parent_ids[3]]
 
             # Crossover
-            cut_point1, cut_point2 = randint(1, min(len(parent1), len(parent2)) - 1), randint(1, min(len(
-                parent1), len(parent2)) - 1)
+            cut_point1 = randint(1, min(len(parent1), len(parent2)) - 1)
+            cut_point2 = randint(1, min(len(parent1), len(parent2)) - 1)
             cut_point1, cut_point2 = min(cut_point1, cut_point2), max(cut_point1, cut_point2)
-
-            child1 = parent1[:cut_point1] + parent2[cut_point1:cut_point2] + parent1[cut_point2:]
-            child2 = parent2[:cut_point1] + parent1[cut_point1:cut_point2] + parent2[cut_point2:]
+            cut1 = parent1[cut_point1:cut_point2]
+            cut2 = parent2[cut_point1:cut_point2]
+            par_list1 = [ele for ele in parent1 if not ele in cut2]
+            par_list2 = [ele for ele in parent2 if not ele in cut1]
+            child1 = par_list1[:cut_point1] + cut2 + par_list1[cut_point1:]
+            child2 = par_list2[:cut_point1] + cut1 + par_list2[cut_point1:]
             next_population += [child1, child2]
 
         # Mutation - 10% of population will mutate
@@ -142,17 +121,15 @@ def genetic_algorithm(dvrp: GraphDVRP, iterations, popsize):
             i2 = randint(0, len(mutated_population) - 1)
             mutated_population[i1], mutated_population[i2] = mutated_population[i2], mutated_population[i1]
 
-        for j in range(len(next_population)):
-            next_population[j] = adjust(dvrp, next_population[j])
         population = next_population
-
-        for route in population:
-            f = fit(dvrp, add_zeros(dvrp, route))
+        for r in population:
+            route = add_zeros(dvrp, r)
+            f = fit(dvrp, route)
             if f < best_route_value:
                 best_route_value = f
                 best_route = route
-    print(f"{best_route_value=}")
-    return best_route
+
+    return (best_route, best_route_value)
 
 
 def draw(dvrp: GraphDVRP, route):
