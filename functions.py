@@ -60,8 +60,13 @@ def add_zeros(dvrp: GraphDVRP, route):
     while i < len(r) - 1:
         d += distance(dvrp.nodes[r[i]], dvrp.nodes[r[i + 1]])
         if d > cap:
-            r.insert(i, 0)
-            d = 0.0
+            if d - distance(dvrp.nodes[r[i]], dvrp.nodes[r[i + 1]]) + distance(dvrp.nodes[r[i]], dvrp.nodes[0]):
+                r.insert(i, 0)
+            else:
+                r.insert(i-1, 0)
+            d = 0
+        elif r[i + 1] == 0:
+            d = 0
         i += 1
         assert i < route_len * 2 + 1, f"Max distance is too small"
     r = remove_zeros(r)
@@ -71,40 +76,29 @@ def add_zeros(dvrp: GraphDVRP, route):
 def genetic_algorithm(dvrp: GraphDVRP, iterations, popsize):
     best_route = None
     best_route_value = sys.float_info.max
-    # generage a random initial population
+    # Generate a random initial population
     population = []
     for i in range(popsize):
         p = [i for i in range(1, len(dvrp.nodes))]
         shuffle(p)
         population.append(p)
-    # iterations
+    # Iterations
     for i in range(iterations):
-        zero_population = []
-        for p in population:
-            zero_population.append(add_zeros(dvrp, p.copy()))
-        fit_population = [fit(dvrp, zero) for zero in zero_population]
-
+        population.sort(reverse=False, key=lambda item: fit(dvrp, add_zeros(dvrp, item.copy())))
         next_population = []
-        for j in range(int(len(population) / 2)):
-            parent_ids = set()
-            while len(parent_ids) < 4:
-                parent_ids |= {randint(0, len(population) - 1)}
-            parent_ids = list(parent_ids)
-
-            if fit_population[parent_ids[0]] < fit_population[parent_ids[1]]:
-                parent1 = population[parent_ids[0]]
+        population_len = len(population)
+        for j in range(int(population_len / 2)):
+            if j % 2 == 0:
+                parent1 = population[j]
+                parent2 = population[j+1]
             else:
-                parent1 = population[parent_ids[1]]
-
-            if fit_population[parent_ids[2]] < fit_population[parent_ids[3]]:
-                parent2 = population[parent_ids[2]]
-            else:
-                parent2 = population[parent_ids[3]]
+                parent1 = population[j]
+                parent2 = population[j + randint(1, int(population_len / 2))]
 
             # Crossover
-            cut_point1 = randint(1, min(len(parent1), len(parent2)) - 1)
-            cut_point2 = randint(1, min(len(parent1), len(parent2)) - 1)
-            cut_point1, cut_point2 = min(cut_point1, cut_point2), max(cut_point1, cut_point2)
+            min_len = min(len(parent1), len(parent2))
+            cut_point1 = randint(0, min_len-1)
+            cut_point2 = cut_point1 + randint(1, min_len-cut_point1)
             cut1 = parent1[cut_point1:cut_point2]
             cut2 = parent2[cut_point1:cut_point2]
             par_list1 = [ele for ele in parent1 if not ele in cut2]
@@ -121,14 +115,22 @@ def genetic_algorithm(dvrp: GraphDVRP, iterations, popsize):
             i2 = randint(0, len(mutated_population) - 1)
             mutated_population[i1], mutated_population[i2] = mutated_population[i2], mutated_population[i1]
 
+        mutation_count = int(popsize * 0.1) if popsize > 10 else 1
+        for j in range(mutation_count):
+            mutated_population = next_population[randint(0, len(next_population) - 1)]
+            i1 = randint(0, len(mutated_population) - 1)
+            mutated_population.insert(i1, 0)
+
+        for p in population:
+            remove_zeros(p)
+
         population = next_population
         for r in population:
             route = add_zeros(dvrp, r)
             f = fit(dvrp, route)
             if f < best_route_value:
                 best_route_value = f
-                best_route = route
-
+                best_route = remove_zeros(route)
     return (best_route, best_route_value)
 
 
