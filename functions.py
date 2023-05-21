@@ -40,6 +40,7 @@ def fit(dvrp: GraphDVRP, route):
         d += distance(previous, next)
     return d
 
+
 def remove_zeros(route):
     i = len(route) - 2
     while i >= 0:
@@ -74,6 +75,7 @@ def add_zeros(dvrp: GraphDVRP, route):
 
 
 def genetic_algorithm(dvrp: GraphDVRP, iterations, popsize):
+    FILE = open("data.txt", "w")
     best_route = None
     best_route_value = sys.float_info.max
     # Generate a random initial population
@@ -131,6 +133,8 @@ def genetic_algorithm(dvrp: GraphDVRP, iterations, popsize):
             if f < best_route_value:
                 best_route_value = f
                 best_route = remove_zeros(route)
+        FILE.write(str(best_route_value) + "\n")
+    FILE.close()
     return (best_route, best_route_value)
 
 
