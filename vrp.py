@@ -20,6 +20,7 @@ parser.add_argument("--popsize", help="population size")
 args = parser.parse_args()
 
 dvrp = fun.process_input_data(args.input, int(args.max), int(args.trucks))
+fun.check_nodes_distance_from_depot(dvrp, False)
 start = time.time()
 best = fun.genetic_algorithm(dvrp, int(args.iterations), int(args.popsize))
 end = time.time()
@@ -27,3 +28,5 @@ print("Result: ", best)
 print("Time: ", end-start)
 
 fun.draw(dvrp, best[0])
+
+fun.check_best(dvrp, best)

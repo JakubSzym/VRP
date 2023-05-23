@@ -32,6 +32,25 @@ def distance(node1, node2):
     return np.sqrt((node1.x - node2.x) ** 2 + (node1.y - node2.y) ** 2)
 
 
+def check_nodes_distance_from_depot(dvrp: GraphDVRP, PRINT = False):
+    for node in dvrp.nodes:
+        val = distance(node, dvrp.nodes[0])
+        assert 2 * val <= dvrp.maxdist, f"Max distance is too small - at least {2*val}"
+        if PRINT:
+            print(val)
+
+
+def check_best(dvrp: GraphDVRP, best):
+    dist = 0
+    for i,ele in enumerate(best[0]):
+        if ele == 0 and i > 0:
+            if dist > dvrp.maxdist:
+                print("Check distance")
+            dist = 0
+        if i < len(best[0]) - 1:
+            dist += distance(dvrp.nodes[best[0][i]], dvrp.nodes[best[0][i+1]])
+
+
 def fit(dvrp: GraphDVRP, route):
     d = max(0, route.count(0) - (dvrp.trucks + 1)) * 100000000
     for i in range(len(route) - 1):
@@ -53,23 +72,25 @@ def remove_zeros(route):
 def add_zeros(dvrp: GraphDVRP, route):
     i = 0
     d = 0.0
-    route_len = len(route)
-    cap = dvrp.maxdist
     r = route.copy()
     r.insert(0, 0)
     r.append(0)
+    #print(f"")
     while i < len(r) - 1:
-        d += distance(dvrp.nodes[r[i]], dvrp.nodes[r[i + 1]])
-        if d > cap:
-            if d - distance(dvrp.nodes[r[i]], dvrp.nodes[r[i + 1]]) + distance(dvrp.nodes[r[i]], dvrp.nodes[0]):
-                r.insert(i, 0)
-            else:
-                r.insert(i-1, 0)
+        #print(f"{i=}, pre{r=}")
+        #print(f"{d + distance(dvrp.nodes[r[i]], dvrp.nodes[r[0]])}")
+        if d + distance(dvrp.nodes[r[i]], dvrp.nodes[r[0]]) >= dvrp.maxdist:
+            r.insert(i, 0)
             d = 0
-        elif r[i + 1] == 0:
+        elif d + distance(dvrp.nodes[r[i]], dvrp.nodes[r[i + 1]]) > dvrp.maxdist:
+            r.insert(i, 0)
             d = 0
-        i += 1
-        assert i < route_len * 2 + 1, f"Max distance is too small"
+        else:
+            d += distance(dvrp.nodes[r[i]], dvrp.nodes[r[i + 1]])
+            i += 1
+        #print(f"{d=}, post{r=}")
+        #if i > 10:
+        #    break
     r = remove_zeros(r)
     return r
 
