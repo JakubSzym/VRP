@@ -23,7 +23,7 @@ dvrp = fun.process_input_data(args.input, int(args.max), int(args.trucks))
 start = time.time()
 best = fun.genetic_algorithm(dvrp, int(args.iterations), int(args.popsize))
 end = time.time()
-print("Cost: ", best)
+print("Result: ", best)
 print("Time: ", end-start)
 
 fun.draw(dvrp, best[0])
