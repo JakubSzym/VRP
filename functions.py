@@ -35,7 +35,8 @@ def distance(node1, node2):
 def check_nodes_distance_from_depot(dvrp: GraphDVRP, PRINT = False):
     for node in dvrp.nodes:
         val = distance(node, dvrp.nodes[0])
-        assert 2 * val <= dvrp.maxdist, f"Max distance is too small - at least {2*val}"
+        assert 2 * val <= dvrp.maxdist, f"Max distance is too small"
+        #f"Max distance is too small - at least {2*val}"
         if PRINT:
             print(val)
 
@@ -44,6 +45,7 @@ def check_best(dvrp: GraphDVRP, best):
     dist = 0
     for i,ele in enumerate(best[0]):
         if ele == 0 and i > 0:
+            print(dist)
             if dist > dvrp.maxdist:
                 print("Check distance")
             dist = 0
@@ -75,6 +77,7 @@ def add_zeros(dvrp: GraphDVRP, route):
     r = route.copy()
     r.insert(0, 0)
     r.append(0)
+    len_r = len(r)
     #print(f"")
     while i < len(r) - 1:
         #print(f"{i=}, pre{r=}")
@@ -89,14 +92,13 @@ def add_zeros(dvrp: GraphDVRP, route):
             d += distance(dvrp.nodes[r[i]], dvrp.nodes[r[i + 1]])
             i += 1
         #print(f"{d=}, post{r=}")
-        #if i > 10:
-        #    break
+        assert i <= 2*len_r+1, f"Max distance is too small"
     r = remove_zeros(r)
     return r
 
 
 def genetic_algorithm(dvrp: GraphDVRP, iterations, popsize):
-    FILE = open("data.txt", "w")
+    #FILE = open("data.txt", "w")
     best_route = None
     best_route_value = sys.float_info.max
     # Generate a random initial population
@@ -108,6 +110,13 @@ def genetic_algorithm(dvrp: GraphDVRP, iterations, popsize):
     # Iterations
     for i in range(iterations):
         population.sort(reverse=False, key=lambda item: fit(dvrp, add_zeros(dvrp, item.copy())))
+        #Best
+        best_zero = add_zeros(dvrp, population[0])
+        best_zero_fit = fit(dvrp, best_zero)
+        if best_zero_fit < best_route_value:
+            best_route_value = best_zero_fit
+            best_route = remove_zeros(best_zero)
+        #Generating new
         next_population = []
         population_len = len(population)
         for j in range(int(population_len / 2)):
@@ -115,8 +124,8 @@ def genetic_algorithm(dvrp: GraphDVRP, iterations, popsize):
                 parent1 = population[j]
                 parent2 = population[j+1]
             else:
-                parent1 = population[j]
-                parent2 = population[j + randint(1, int(population_len / 2))]
+                parent1 = population[randint(0, int(population_len / 2))]
+                parent2 = population[randint(0, int(population_len / 2))]
 
             # Crossover
             min_len = min(len(parent1), len(parent2))
@@ -131,14 +140,21 @@ def genetic_algorithm(dvrp: GraphDVRP, iterations, popsize):
             next_population += [child1, child2]
 
         # Mutation - 10% of population will mutate
-        mutation_count = int(popsize * 0.1) if popsize > 10 else 1
+        mutation_count = int(popsize * 0.05) if popsize > 20 else 1
         for j in range(mutation_count):
             mutated_population = next_population[randint(0, len(next_population) - 1)]
             i1 = randint(0, len(mutated_population) - 1)
             i2 = randint(0, len(mutated_population) - 1)
             mutated_population[i1], mutated_population[i2] = mutated_population[i2], mutated_population[i1]
 
-        mutation_count = int(popsize * 0.1) if popsize > 10 else 1
+        for j in range(mutation_count):
+            mutated_population = next_population[randint(0, len(next_population) - 1)]
+            i1 = randint(0, len(mutated_population) - 1)
+            i2 = randint(0, len(mutated_population) - 1)
+            i1, i2 = min(i1, i2), max(i1, i2)
+            mutated_population[i1:i2] = mutated_population[i1:i2][::-1]
+
+        mutation_count = int(popsize * 0.01 * dvrp.trucks) if popsize > 20 else 1
         for j in range(mutation_count):
             mutated_population = next_population[randint(0, len(next_population) - 1)]
             i1 = randint(0, len(mutated_population) - 1)
@@ -148,14 +164,13 @@ def genetic_algorithm(dvrp: GraphDVRP, iterations, popsize):
             remove_zeros(p)
 
         population = next_population
-        for r in population:
-            route = add_zeros(dvrp, r)
-            f = fit(dvrp, route)
-            if f < best_route_value:
-                best_route_value = f
-                best_route = remove_zeros(route)
-        FILE.write(str(best_route_value) + "\n")
-    FILE.close()
+    # Best
+    best_zero = add_zeros(dvrp, population[0])
+    best_zero_fit = fit(dvrp, best_zero)
+    if best_zero_fit < best_route_value:
+        best_route_value = best_zero_fit
+        best_route = remove_zeros(best_zero)
+    #FILE.close()
     return (best_route, best_route_value)
 
 
@@ -174,3 +189,4 @@ def draw(dvrp: GraphDVRP, route):
         draw_img.line([(begin.x * 100 + w / 2, begin.y * 100 + h / 2), (end.x * 100 + w / 2, end.y * 100 + h / 2)],
                       fill="black")
     img.show()
+    img.save("img.png")
